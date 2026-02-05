@@ -30,14 +30,14 @@ const { Text, Title } = Typography
 const menuConfig = {
     receptionist: [
         { key: '/receptionist', icon: <DashboardOutlined />, label: 'Tổng quan' },
-        { key: '/receptionist/order-intake', icon: <FormOutlined />, label: 'Tiếp nhận đơn' },
-        { key: '/receptionist/quotes', icon: <FileTextOutlined />, label: 'Báo giá & Hóa đơn' },
+        { key: '/receptionist/orders', icon: <FormOutlined />, label: 'Tiếp nhận đơn' },
+        { key: '/receptionist/customers', icon: <FileTextOutlined />, label: 'Báo giá & Hóa đơn' },
         { key: '/receptionist/appointments', icon: <CalendarOutlined />, label: 'Lịch hẹn' },
     ],
     technician: [
         { key: '/technician', icon: <DashboardOutlined />, label: 'Tổng quan' },
-        { key: '/technician/work-list', icon: <UnorderedListOutlined />, label: 'Danh sách công việc' },
-        { key: '/technician/parts-request', icon: <InboxOutlined />, label: 'Yêu cầu linh kiện' },
+        { key: '/technician/tasks', icon: <UnorderedListOutlined />, label: 'Danh sách công việc' },
+        { key: '/technician/inventory', icon: <InboxOutlined />, label: 'Yêu cầu linh kiện' },
     ],
     admin: [
         { key: '/admin', icon: <DashboardOutlined />, label: 'Tổng quan' },
@@ -53,12 +53,14 @@ const roleTitles = {
     admin: 'Quản trị',
 }
 
-const DashboardLayout = ({ role }) => {
+const DashboardLayout = () => {
     const [collapsed, setCollapsed] = useState(false)
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
     const location = useLocation()
     const navigate = useNavigate()
     const { user, logout } = useAuth()
+
+    const role = user?.role || 'customer'
 
     const handleLogout = () => {
         logout()
