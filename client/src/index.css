@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /* ========================================
-   GLOBAL STYLES - LaptopCare
+   GLOBAL STYLES - Sửa Chữa Laptop
    ======================================== */
 
 /* Fix conflict between Ant Design and Tailwind Preflight */
@@ -20,29 +20,29 @@ button,
 }
 
 :root {
-    /* Brand Colors */
-    --color-primary: #2563eb;
-    --color-primary-light: #3b82f6;
-    --color-primary-dark: #1d4ed8;
-    --color-accent: #d946ef;
+    /* Brand Colors - Purple Theme */
+    --color-primary: #7c3aed;
+    --color-primary-light: #8b5cf6;
+    --color-primary-dark: #6d28d9;
+    --color-accent: #a855f7;
     --color-success: #10b981;
     --color-warning: #f59e0b;
     --color-danger: #ef4444;
 
     /* Neutral Colors */
-    --color-bg: #f8fafc;
-    --color-bg-dark: #0f172a;
+    --color-bg: #faf8ff;
+    --color-bg-dark: #1a1025;
     --color-surface: #ffffff;
-    --color-surface-dark: #1e293b;
-    --color-text: #1e293b;
-    --color-text-secondary: #64748b;
-    --color-border: #e2e8f0;
+    --color-surface-dark: #2d1f3d;
+    --color-text: #1e1b2e;
+    --color-text-secondary: #6b7280;
+    --color-border: #e9e5f0;
 
     /* Shadows */
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-    --shadow-glow: 0 0 20px rgba(37, 99, 235, 0.3);
+    --shadow-glow: 0 0 20px rgba(124, 58, 237, 0.3);
 
     /* Transitions */
     --transition-fast: 150ms ease;
@@ -84,7 +84,6 @@ h6 {
     line-height: 1.3;
     color: var(--color-text);
     margin-bottom: 0.5em;
-    /* Restore margin removed by Tailwind preflight sometimes */
 }
 
 h1 {
@@ -153,15 +152,14 @@ h6 {
 }
 
 .gradient-primary {
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
 }
 
 .gradient-text {
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    /* Use standard css property for text fill */
     -webkit-text-fill-color: transparent;
 }
 
@@ -204,11 +202,32 @@ h6 {
 
 /* Fix primary button shadow */
 .ant-btn-primary:not(:disabled) {
-    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
 }
 
 .ant-btn-primary:not(:disabled):hover {
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+}
+
+/* Header Search Bar */
+.header-search .ant-input-wrapper {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.header-search .ant-input {
+    border-radius: 8px 0 0 8px;
+}
+
+.header-search .ant-input-search-button {
+    border-radius: 0 8px 8px 0 !important;
+    background: var(--color-primary) !important;
+    border-color: var(--color-primary) !important;
+}
+
+.header-search .ant-input-search-button:hover {
+    background: var(--color-primary-dark) !important;
+    border-color: var(--color-primary-dark) !important;
 }
 
 /* Status Colors */
@@ -219,7 +238,7 @@ h6 {
 
 .status-in-progress {
     color: var(--color-primary);
-    background: rgba(37, 99, 235, 0.1);
+    background: rgba(124, 58, 237, 0.1);
 }
 
 .status-completed {
@@ -291,7 +310,35 @@ h6 {
 }
 
 .shadow-glow {
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
+}
+
+/* ========================================
+   MARQUEE
+   ======================================== */
+
+.marquee-container {
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.marquee-content {
+    display: inline-flex;
+    animation: marqueeScroll 30s linear infinite;
+}
+
+.marquee-content:hover {
+    animation-play-state: paused;
+}
+
+@keyframes marqueeScroll {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-50%);
+    }
 }
 
 /* ========================================

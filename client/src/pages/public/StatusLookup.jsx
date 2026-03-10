@@ -116,14 +116,14 @@ const StatusLookup = () => {
                         </div>
 
                         <div className="flex gap-3">
-                            <Input size="large" placeholder={searchType === 'tracking' ? 'Nhập mã vận đơn (VD: LC240001)' : 'Nhập số điện thoại (VD: 0967890123)'} prefix={searchType === 'tracking' ? <FileTextOutlined /> : <PhoneOutlined />} value={searchValue} onChange={(e) => setSearchValue(e.target.value)} onPressEnter={handleSearch} className="flex-1" />
+                            <Input size="large" placeholder={searchType === 'tracking' ? 'Nhập mã vận đơn (VD: LC260001)' : 'Nhập số điện thoại (VD: 0967890123)'} prefix={searchType === 'tracking' ? <FileTextOutlined /> : <PhoneOutlined />} value={searchValue} onChange={(e) => setSearchValue(e.target.value)} onPressEnter={handleSearch} className="flex-1" />
                             <Button type="primary" size="large" icon={<SearchOutlined />} onClick={handleSearch} loading={loading} className="px-8">Tra cứu</Button>
                         </div>
 
                         {error && <div className="mt-4 p-3 bg-red-50 text-red-600 rounded-lg text-center">{error}</div>}
 
                         <div className="mt-4 p-3 bg-blue-50 text-blue-700 rounded-lg text-sm">
-                            <strong>Demo:</strong> Thử tra cứu với mã <code className="bg-blue-100 px-1 rounded">LC240001</code> hoặc số điện thoại <code className="bg-blue-100 px-1 rounded">0967890123</code>
+                            <strong>Demo:</strong> Thử tra cứu với mã <code className="bg-blue-100 px-1 rounded">LC260001</code> hoặc số điện thoại <code className="bg-blue-100 px-1 rounded">0967890123</code>
                         </div>
                     </div>
                 </Card>

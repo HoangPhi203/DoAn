@@ -12,7 +12,7 @@ export const mockInventory = [
         price: 3500000,
         costPrice: 2800000,
         location: 'Kệ A1',
-        lastUpdated: '2024-02-01',
+        lastUpdated: '2026-02-01',
     },
     {
         id: 'INV-002',
@@ -25,7 +25,7 @@ export const mockInventory = [
         price: 3200000,
         costPrice: 2500000,
         location: 'Kệ A1',
-        lastUpdated: '2024-01-28',
+        lastUpdated: '2026-01-28',
     },
     {
         id: 'INV-003',
@@ -38,7 +38,7 @@ export const mockInventory = [
         price: 4500000,
         costPrice: 3800000,
         location: 'Kệ B2',
-        lastUpdated: '2024-02-02',
+        lastUpdated: '2026-02-02',
     },
     {
         id: 'INV-004',
@@ -51,7 +51,7 @@ export const mockInventory = [
         price: 2200000,
         costPrice: 1600000,
         location: 'Kệ B2',
-        lastUpdated: '2024-01-30',
+        lastUpdated: '2026-01-30',
     },
     {
         id: 'INV-005',
@@ -64,7 +64,7 @@ export const mockInventory = [
         price: 1800000,
         costPrice: 1200000,
         location: 'Kệ C1',
-        lastUpdated: '2024-02-01',
+        lastUpdated: '2026-02-01',
     },
     {
         id: 'INV-006',
@@ -77,7 +77,7 @@ export const mockInventory = [
         price: 800000,
         costPrice: 500000,
         location: 'Kệ D1',
-        lastUpdated: '2024-02-03',
+        lastUpdated: '2026-02-03',
     },
     {
         id: 'INV-007',
@@ -90,7 +90,7 @@ export const mockInventory = [
         price: 350000,
         costPrice: 220000,
         location: 'Kệ D2',
-        lastUpdated: '2024-02-01',
+        lastUpdated: '2026-02-01',
     },
     {
         id: 'INV-008',
@@ -103,7 +103,7 @@ export const mockInventory = [
         price: 2800000,
         costPrice: 2200000,
         location: 'Kệ E1',
-        lastUpdated: '2024-01-25',
+        lastUpdated: '2026-01-25',
     },
     {
         id: 'INV-009',
@@ -116,7 +116,7 @@ export const mockInventory = [
         price: 1200000,
         costPrice: 900000,
         location: 'Kệ E1',
-        lastUpdated: '2024-02-02',
+        lastUpdated: '2026-02-02',
     },
     {
         id: 'INV-010',
@@ -129,7 +129,7 @@ export const mockInventory = [
         price: 650000,
         costPrice: 480000,
         location: 'Kệ E2',
-        lastUpdated: '2024-01-28',
+        lastUpdated: '2026-01-28',
     },
     {
         id: 'INV-011',
@@ -142,7 +142,7 @@ export const mockInventory = [
         price: 1200000,
         costPrice: 900000,
         location: 'Kệ E2',
-        lastUpdated: '2024-02-01',
+        lastUpdated: '2026-02-01',
     },
     {
         id: 'INV-012',
@@ -155,7 +155,7 @@ export const mockInventory = [
         price: 450000,
         costPrice: 280000,
         location: 'Kệ F1',
-        lastUpdated: '2024-01-20',
+        lastUpdated: '2026-01-20',
     },
     {
         id: 'INV-013',
@@ -168,7 +168,7 @@ export const mockInventory = [
         price: 150000,
         costPrice: 80000,
         location: 'Kệ F2',
-        lastUpdated: '2024-02-03',
+        lastUpdated: '2026-02-03',
     },
     {
         id: 'INV-014',
@@ -181,7 +181,7 @@ export const mockInventory = [
         price: 950000,
         costPrice: 650000,
         location: 'Kệ G1',
-        lastUpdated: '2024-01-15',
+        lastUpdated: '2026-01-15',
     },
     {
         id: 'INV-015',
@@ -194,7 +194,7 @@ export const mockInventory = [
         price: 2200000,
         costPrice: 1700000,
         location: 'Kệ G1',
-        lastUpdated: '2024-02-02',
+        lastUpdated: '2026-02-02',
     },
 ]
 

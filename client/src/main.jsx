@@ -7,14 +7,14 @@ import App from './App.jsx'
 import { AuthProvider } from './contexts/AuthContext.jsx'
 import './index.css'
 
-// Ant Design theme configuration
+// Ant Design theme configuration - Purple Theme
 const theme = {
     token: {
-        colorPrimary: '#2563eb',
+        colorPrimary: '#7c3aed',
         colorSuccess: '#10b981',
         colorWarning: '#f59e0b',
         colorError: '#ef4444',
-        colorInfo: '#3b82f6',
+        colorInfo: '#8b5cf6',
         borderRadius: 8,
         fontFamily: "'Be Vietnam Pro', 'Inter', system-ui, sans-serif",
     },

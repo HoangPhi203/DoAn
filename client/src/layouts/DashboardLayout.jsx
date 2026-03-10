@@ -99,7 +99,7 @@ const DashboardLayout = () => {
     ]
 
     const notifications = [
-        { id: 1, title: 'Đơn mới #ORD-2024-007', time: '5 phút trước' },
+        { id: 1, title: 'Đơn mới #ORD-2026-007', time: '5 phút trước' },
         { id: 2, title: 'Khách xác nhận báo giá', time: '15 phút trước' },
         { id: 3, title: 'Linh kiện về kho', time: '1 giờ trước' },
     ]

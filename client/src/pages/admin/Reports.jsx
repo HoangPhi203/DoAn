@@ -31,9 +31,9 @@ const Reports = () => {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <Title level={4} className="!mb-0">Báo cáo & Thống kê</Title>
-                <Select defaultValue="2024" className="w-32">
-                    <Option value="2024">Năm 2024</Option>
-                    <Option value="2023">Năm 2023</Option>
+                <Select defaultValue="2026" className="w-32">
+                    <Option value="2026">Năm 2026</Option>
+                    <Option value="2025">Năm 2025</Option>
                 </Select>
             </div>
 
