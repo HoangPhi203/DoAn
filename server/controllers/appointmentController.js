@@ -1,5 +1,6 @@
 const LichHen = require('../models/LichHen');
 const User = require('../models/User');
+const ThongBao = require('../models/ThongBao');
 
 // @desc    Get all appointments
 // @route   GET /api/appointments
@@ -106,6 +107,28 @@ exports.createAppointment = async (req, res, next) => {
             ghiChu,
             trangThaiXacNhan: 'ChoXacNhan'
         });
+
+        // Tạo thông báo cho Lễ Tân và Admin
+        const notificationContent = `Khách hàng ${hoTenKhach} (${soDienThoai}) vừa đặt lịch hẹn mới vào lúc ${new Date(ngayGioHen).toLocaleString('vi-VN')}.`;
+        
+        await ThongBao.create([
+            {
+                tieuDe: 'Lịch hẹn mới',
+                noiDung: notificationContent,
+                loai: 'LichHen',
+                nguoiNhan: 'Admin',
+                duLieuLienQuan: appointment._id,
+                loaiThamChieu: 'LichHen'
+            },
+            {
+                tieuDe: 'Lịch hẹn mới',
+                noiDung: notificationContent,
+                loai: 'LichHen',
+                nguoiNhan: 'TiepTan',
+                duLieuLienQuan: appointment._id,
+                loaiThamChieu: 'LichHen'
+            }
+        ]);
 
         res.status(201).json({
             success: true,
@@ -216,6 +239,103 @@ exports.getAvailableSlots = async (req, res, next) => {
             success: true,
             date: ngay,
             data: slots
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// @desc    Public lookup appointment by phone
+// @route   GET /api/appointments/lookup
+// @access  Public
+exports.lookupAppointment = async (req, res, next) => {
+    try {
+        const { soDienThoai } = req.query;
+
+        if (!soDienThoai) {
+            return res.status(400).json({
+                success: false,
+                message: 'Vui lòng cung cấp số điện thoại để tra cứu'
+            });
+        }
+
+        const appointments = await LichHen.find({ soDienThoai })
+            .sort('-createdAt')
+            .limit(10);
+
+        res.status(200).json({
+            success: true,
+            count: appointments.length,
+            data: appointments
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// @desc    Confirm appointment and convert to order
+// @route   POST /api/appointments/:id/confirm-to-order
+// @access  Private/Admin,TiepTan
+exports.confirmToOrder = async (req, res, next) => {
+    try {
+        const appointment = await LichHen.findById(req.params.id);
+
+        if (!appointment) {
+            return res.status(404).json({
+                success: false,
+                message: 'Không tìm thấy lịch hẹn'
+            });
+        }
+
+        if (appointment.trangThaiXacNhan !== 'ChoXacNhan') {
+            return res.status(400).json({
+                success: false,
+                message: 'Chỉ có thể xác nhận lịch hẹn ở trạng thái Chờ xác nhận'
+            });
+        }
+
+        // Handle customer User
+        let customerId = appointment.khachHang;
+        
+        if (!customerId) {
+            // Check if user exists by phone
+            let user = await User.findOne({ soDienThoai: appointment.soDienThoai });
+            if (!user) {
+                // Create user
+                user = await User.create({
+                    hoTen: appointment.hoTenKhach,
+                    soDienThoai: appointment.soDienThoai,
+                    matKhau: '123456', // Default password for system-created users
+                    vaiTro: 'KhachHang'
+                });
+            }
+            customerId = user._id;
+            
+            // Link to appointment
+            appointment.khachHang = customerId;
+        }
+
+        // Create Order
+        const DonHang = require('../models/DonHang');
+        const order = await DonHang.create({
+            modelMay: appointment.modelMay || 'Không xác định',
+            tinhTrangLoi: appointment.noiDungHongHoc || 'Chưa cung cấp',
+            khachHang: customerId,
+            trangThai: 'ChoBaoGia', // Passes to tech for quotes/triage
+            ghiChu: appointment.ghiChu ? `Từ lịch hẹn: ${appointment.ghiChu}` : 'Tạo từ lịch hẹn'
+        });
+
+        // Update appointment status to DaXacNhan
+        appointment.trangThaiXacNhan = 'DaXacNhan';
+        await appointment.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Đã xác nhận lịch hẹn và tạo đơn hàng thành công',
+            data: {
+                appointment,
+                order
+            }
         });
     } catch (err) {
         next(err);

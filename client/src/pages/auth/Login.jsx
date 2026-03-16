@@ -58,16 +58,13 @@ const Login = () => {
                             <Form.Item name="password" label="Mật khẩu" rules={[{ required: true, message: 'Vui lòng nhập mật khẩu' }]}>
                                 <Input.Password prefix={<LockOutlined className="text-gray-400" />} placeholder="Mật khẩu" />
                             </Form.Item>
-                            <Button type="primary" htmlType="submit" block loading={loading} icon={<LoginOutlined />} className="h-12">
+                            <Button type="primary" htmlType="submit" block loading={loading} icon={<LoginOutlined />} className="h-12 gradient-primary border-0">
                                 Đăng nhập
                             </Button>
                         </Form>
 
-                        <Divider>hoặc</Divider>
-                        <div className="text-center">
-                            <Text className="text-gray-500">Chưa có tài khoản? </Text>
-                            <Link to="/register" className="text-primary-600 font-medium">Đăng ký ngay</Link>
-                        </div>
+
+
 
                         <div className="mt-6 p-4 bg-gray-50 rounded-xl text-sm">
                             <Text strong className="block mb-2">Demo:</Text>

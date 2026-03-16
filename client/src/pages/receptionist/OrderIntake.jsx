@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Card, Form, Input, Select, Button, Typography, Row, Col, Divider, message } from 'antd'
 import { UserOutlined, PhoneOutlined, LaptopOutlined, SaveOutlined } from '@ant-design/icons'
 
@@ -7,13 +8,50 @@ const { Option } = Select
 
 const OrderIntake = () => {
     const [form] = Form.useForm()
+    const [loading, setLoading] = useState(false)
 
     const deviceBrands = ['Dell', 'HP', 'Lenovo', 'Asus', 'Acer', 'Apple', 'MSI', 'Samsung', 'Khác']
 
-    const handleSubmit = (values) => {
-        console.log('Order data:', values)
-        message.success('Đã tạo đơn tiếp nhận thành công!')
-        form.resetFields()
+    const handleSubmit = async (values) => {
+        try {
+            setLoading(true)
+            const token = localStorage.getItem('token')
+            
+            // Format data for the backend
+            const payload = {
+                khachHang: {
+                    hoTen: values.customerName,
+                    soDienThoai: values.customerPhone
+                },
+                modelMay: `${values.deviceBrand} ${values.deviceModel}`,
+                serialIMEI: values.deviceSerial || '',
+                tinhTrangLoi: values.issueDescription,
+                phuKienKem: values.accessories ? [values.accessories] : []
+            }
+
+            const response = await fetch('http://localhost:5000/api/orders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+            })
+
+            const data = await response.json()
+
+            if (data.success) {
+                message.success(`Đã tạo đơn tiếp nhận thành công! Mã đơn: ${data.data.maVanDon}`)
+                form.resetFields()
+            } else {
+                message.error(data.message || 'Có lỗi xảy ra khi tạo đơn')
+            }
+        } catch (error) {
+            console.error('Error creating order:', error)
+            message.error('Lỗi kết nối đến server')
+        } finally {
+            setLoading(false)
+        }
     }
 
     return (
@@ -35,7 +73,7 @@ const OrderIntake = () => {
                             </Form.Item>
                         </Col>
                         <Col xs={24} md={12}>
-                            <Form.Item name="customerPhone" label="Số điện thoại" rules={[{ required: true, message: 'Nhập SĐT' }]}>
+                            <Form.Item name="customerPhone" label="Số điện thoại" rules={[{ required: true, message: 'Nhập SĐT' }, { pattern: /^0\d{9}$/, message: 'SĐT không hợp lệ' }]}>
                                 <Input prefix={<PhoneOutlined className="text-gray-400" />} placeholder="0901234567" />
                             </Form.Item>
                         </Col>
@@ -79,7 +117,7 @@ const OrderIntake = () => {
 
                     <div className="flex justify-end gap-3 mt-6">
                         <Button onClick={() => form.resetFields()}>Xóa form</Button>
-                        <Button type="primary" htmlType="submit" icon={<SaveOutlined />}>Tạo đơn tiếp nhận</Button>
+                        <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={loading}>Tạo đơn tiếp nhận</Button>
                     </div>
                 </Form>
             </Card>

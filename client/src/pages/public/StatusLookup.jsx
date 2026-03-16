@@ -20,36 +20,124 @@ const StatusLookup = () => {
     const [searchType, setSearchType] = useState('tracking')
     const [loading, setLoading] = useState(false)
     const [searchResult, setSearchResult] = useState(null)
+    const [orderList, setOrderList] = useState(null) // New state for multiple results
     const [error, setError] = useState('')
+
+    const [appointmentResults, setAppointmentResults] = useState(null)
+
+    const appointmentStatusMap = {
+        ChoXacNhan: { label: 'Chờ xác nhận', color: '#f59e0b' },
+        DaXacNhan: { label: 'Đã xác nhận', color: '#3b82f6' },
+        DaHuy: { label: 'Đã hủy', color: '#ef4444' },
+        DaHoanThanh: { label: 'Đã hoàn thành', color: '#10b981' },
+    }
+
+    const formatAndSetOrder = (backendOrder) => {
+        const statusMapping = {
+            'ChoBaoGia': 'pending_quote',
+            'ChoKhachDuyet': 'quoted',
+            'DangSua': 'repairing',
+            'ChoLinhKien': 'waiting_parts',
+            'HoanThanh': 'completed',
+            'DaTraKhach': 'delivered',
+            'DaHuy': 'cancelled'
+        }
+
+        const formattedOrder = {
+            trackingCode: backendOrder.maVanDon,
+            status: statusMapping[backendOrder.trangThai] || 'pending_quote',
+            customer: {
+                name: backendOrder.khachHang?.hoTen || 'Khách hàng',
+                phone: backendOrder.khachHang?.soDienThoai || ''
+            },
+            device: {
+                brand: backendOrder.modelMay || 'Thiết bị',
+                model: '',
+                serial: backendOrder.serialIMEI || ''
+            },
+            issueDescription: backendOrder.tinhTrangLoi || backendOrder.ghiChu || 'Không có mô tả',
+            createdAt: backendOrder.createdAt,
+            estimatedCompletion: backendOrder.ngayHenTra || null,
+            actualReturn: backendOrder.ngayTraThucTe || null,
+            invoiceCode: backendOrder.maHoaDon || null,
+            quote: backendOrder.chiTietSuaChua ? {
+                totalCost: backendOrder.tongTienHoaDon || 
+                    ((backendOrder.chiTietSuaChua.congTho || 0) + 
+                    (backendOrder.chiTietSuaChua.danhSachLinhKien?.reduce((sum, item) => sum + (item.soLuong * (item.donGia || item.linhKien?.giaBan || 0)), 0) || 0) -
+                    (backendOrder.giamGiaHoaDon || 0)),
+                laborCost: backendOrder.chiTietSuaChua.congTho || 0,
+                discount: backendOrder.giamGiaHoaDon || 0,
+                parts: backendOrder.chiTietSuaChua.danhSachLinhKien?.map(p => ({
+                    sku: p.linhKien?.maSKU || 'N/A',
+                    name: p.tenLinhKien,
+                    quantity: p.soLuong,
+                    price: p.donGia || p.linhKien?.giaBan || 0,
+                    subtotal: p.soLuong * (p.donGia || p.linhKien?.giaBan || 0)
+                })) || []
+            } : null,
+            notes: backendOrder.chiTietSuaChua?.ghiChuKyThuat ? [{
+                text: backendOrder.chiTietSuaChua.ghiChuKyThuat,
+                createdAt: backendOrder.chiTietSuaChua.updatedAt || new Date().toISOString()
+            }] : []
+        }
+        
+        setSearchResult(formattedOrder)
+        setOrderList(null)
+    }
 
     const handleSearch = async () => {
         if (!searchValue.trim()) {
-            setError('Vui lòng nhập mã vận đơn hoặc số điện thoại')
+            setError('Vui lòng nhập thông tin tra cứu')
             return
         }
 
         setError('')
         setLoading(true)
         setSearchResult(null)
+        setOrderList(null)
+        setAppointmentResults(null)
 
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        try {
+            const term = searchValue.replace(/\s/g, '')
+            let foundOrder = false
+            let foundAppointment = false
 
-        let result = null
-        if (searchType === 'tracking') {
-            result = mockOrders.find(
-                order => order.trackingCode.toLowerCase() === searchValue.toLowerCase() ||
-                    order.id.toLowerCase() === searchValue.toLowerCase()
-            )
-        } else {
-            result = mockOrders.find(
-                order => order.customer.phone === searchValue.replace(/\s/g, '')
-            )
-        }
+            // 1. Always look for orders/tracking first
+            const orderResponse = await fetch(`http://localhost:5000/api/orders/track/${term}`)
+            const orderData = await orderResponse.json()
 
-        if (result) {
-            setSearchResult(result)
-        } else {
-            setError('Không tìm thấy đơn hàng. Vui lòng kiểm tra lại thông tin.')
+            if (orderData.success && orderData.count > 0) {
+                foundOrder = true
+                if (orderData.count > 1 && searchType === 'phone') {
+                    setOrderList(orderData.data)
+                } else {
+                    const backendOrder = orderData.data[0]
+                    formatAndSetOrder(backendOrder)
+                }
+            }
+
+            // 2. If it's a phone-like term, also look for appointments
+            if (searchType === 'phone' || /^\d+$/.test(term)) {
+                const aptResponse = await fetch(`http://localhost:5000/api/appointments/lookup?soDienThoai=${term}`)
+                const aptData = await aptResponse.json()
+                
+                // Only show appointments that haven't been confirmed to orders yet, to avoid double-displaying history
+                if (aptData.success && aptData.count > 0) {
+                    const pendingAppointments = aptData.data.filter(a => a.trangThaiXacNhan === 'ChoXacNhan')
+                    if (pendingAppointments.length > 0) {
+                        foundAppointment = true
+                        setAppointmentResults(pendingAppointments)
+                    }
+                }
+            }
+
+            if (!foundOrder && !foundAppointment) {
+                setError('Không tìm thấy đơn hàng hoặc lịch hẹn nào. Vui lòng kiểm tra lại thông tin.')
+            }
+
+        } catch (err) {
+            console.error(err)
+            setError('Lỗi kết nối server. Vui lòng thử lại sau.')
         }
 
         setLoading(false)
@@ -111,19 +199,33 @@ const StatusLookup = () => {
                 <Card className="shadow-lg border-0 mb-8" style={{ borderRadius: 16 }}>
                     <div className="p-2 md:p-4">
                         <div className="flex gap-2 mb-4">
-                            <Button type={searchType === 'tracking' ? 'primary' : 'default'} icon={<FileTextOutlined />} onClick={() => setSearchType('tracking')} className="flex-1">Mã vận đơn</Button>
-                            <Button type={searchType === 'phone' ? 'primary' : 'default'} icon={<PhoneOutlined />} onClick={() => setSearchType('phone')} className="flex-1">Số điện thoại</Button>
+                            <Button
+                                type={searchType === 'tracking' ? 'primary' : 'default'}
+                                icon={<FileTextOutlined />}
+                                onClick={() => setSearchType('tracking')}
+                                className={`flex-1 ${searchType === 'tracking' ? 'gradient-primary border-0' : ''}`}
+                            >
+                                Mã vận đơn
+                            </Button>
+                            <Button
+                                type={searchType === 'phone' ? 'primary' : 'default'}
+                                icon={<PhoneOutlined />}
+                                onClick={() => setSearchType('phone')}
+                                className={`flex-1 ${searchType === 'phone' ? 'gradient-primary border-0' : ''}`}
+                            >
+                                Số điện thoại
+                            </Button>
                         </div>
 
                         <div className="flex gap-3">
                             <Input size="large" placeholder={searchType === 'tracking' ? 'Nhập mã vận đơn (VD: LC260001)' : 'Nhập số điện thoại (VD: 0967890123)'} prefix={searchType === 'tracking' ? <FileTextOutlined /> : <PhoneOutlined />} value={searchValue} onChange={(e) => setSearchValue(e.target.value)} onPressEnter={handleSearch} className="flex-1" />
-                            <Button type="primary" size="large" icon={<SearchOutlined />} onClick={handleSearch} loading={loading} className="px-8">Tra cứu</Button>
+                            <Button type="primary" size="large" icon={<SearchOutlined />} onClick={handleSearch} loading={loading} className="px-8 gradient-primary border-0">Tra cứu</Button>
                         </div>
 
                         {error && <div className="mt-4 p-3 bg-red-50 text-red-600 rounded-lg text-center">{error}</div>}
 
                         <div className="mt-4 p-3 bg-blue-50 text-blue-700 rounded-lg text-sm">
-                            <strong>Demo:</strong> Thử tra cứu với mã <code className="bg-blue-100 px-1 rounded">LC260001</code> hoặc số điện thoại <code className="bg-blue-100 px-1 rounded">0967890123</code>
+                            <strong>Hướng dẫn:</strong> Tra cứu đơn sửa chữa bằng <strong>Mã vận đơn</strong> (VD: <em>VD-260124-0085</em>) hoặc <strong>Số điện thoại</strong> (VD: <em>0348540723</em>).
                         </div>
                     </div>
                 </Card>
@@ -132,6 +234,46 @@ const StatusLookup = () => {
                     <div className="text-center py-12">
                         <Spin size="large" />
                         <div className="mt-4 text-gray-500">Đang tìm kiếm...</div>
+                    </div>
+                )}
+
+                {orderList && !loading && (
+                    <div className="animate-fade-in space-y-4">
+                        <Title level={4}>Tìm thấy {orderList.length} đơn hàng của bạn</Title>
+                        <Row gutter={[16, 16]}>
+                            {orderList.map(order => (
+                                <Col xs={24} key={order._id}>
+                                    <Card hoverable className="border-0 shadow-sm" onClick={() => formatAndSetOrder(order)}>
+                                        <div className="flex justify-between items-center">
+                                            <div>
+                                                <Text strong className="text-lg">{order.maVanDon}</Text>
+                                                <div className="text-gray-500">{order.modelMay} - {new Date(order.createdAt).toLocaleDateString('vi-VN')}</div>
+                                            </div>
+                                            <Tag color={statusColors[{
+                                                'ChoBaoGia': 'pending_quote',
+                                                'ChoKhachDuyet': 'quoted',
+                                                'DangSua': 'repairing',
+                                                'ChoLinhKien': 'waiting_parts',
+                                                'HoanThanh': 'completed',
+                                                'DaTraKhach': 'delivered',
+                                                'DaHuy': 'cancelled'
+                                            }[order.trangThai]] || 'gray'}>
+                                                {statusLabels[{
+                                                    'ChoBaoGia': 'pending_quote',
+                                                    'ChoKhachDuyet': 'quoted',
+                                                    'DangSua': 'repairing',
+                                                    'ChoLinhKien': 'waiting_parts',
+                                                    'HoanThanh': 'completed',
+                                                    'DaTraKhach': 'delivered',
+                                                    'DaHuy': 'cancelled'
+                                                }[order.trangThai]]}
+                                            </Tag>
+                                        </div>
+                                    </Card>
+                                </Col>
+                            ))}
+                        </Row>
+                        <Divider />
                     </div>
                 )}
 
@@ -164,8 +306,22 @@ const StatusLookup = () => {
                                 <Col xs={24} md={12}>
                                     <div className="space-y-4">
                                         <div><Text className="text-gray-500 text-sm">Ngày tiếp nhận</Text><div className="font-medium">{new Date(searchResult.createdAt).toLocaleDateString('vi-VN', { year: 'numeric', month: 'long', day: 'numeric' })}</div></div>
-                                        <div><Text className="text-gray-500 text-sm">Dự kiến hoàn thành</Text><div className="font-medium">{searchResult.estimatedCompletion ? new Date(searchResult.estimatedCompletion).toLocaleDateString('vi-VN', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Chưa xác định'}</div></div>
-                                        {searchResult.quote && (<div><Text className="text-gray-500 text-sm">Chi phí dự kiến</Text><div className="font-bold text-primary-600 text-lg">{searchResult.quote.totalCost.toLocaleString('vi-VN')}đ</div></div>)}
+                                        <div>
+                                            <Text className="text-gray-500 text-sm">Trạng thái hoàn thành</Text>
+                                            <div className="font-medium">
+                                                {searchResult.status === 'delivered' || searchResult.status === 'completed' ? (
+                                                    <span className="text-green-600">Đã hoàn thành lúc {new Date(searchResult.actualReturn || searchResult.createdAt).toLocaleDateString('vi-VN')}</span>
+                                                ) : (
+                                                    <span>Dự kiến: {searchResult.estimatedCompletion ? new Date(searchResult.estimatedCompletion).toLocaleDateString('vi-VN', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Chưa xác định'}</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        {searchResult.quote && (
+                                            <div>
+                                                <Text className="text-gray-500 text-sm">Tổng chi phí dự kiến</Text>
+                                                <div className="font-bold text-primary-600 text-2xl">{searchResult.quote.totalCost.toLocaleString('vi-VN')}đ</div>
+                                            </div>
+                                        )}
                                     </div>
                                 </Col>
                             </Row>
@@ -176,6 +332,63 @@ const StatusLookup = () => {
                                 <Text className="text-gray-500 text-sm">Mô tả lỗi</Text>
                                 <Paragraph className="!mb-0 mt-1 p-3 bg-gray-50 rounded-lg">{searchResult.issueDescription}</Paragraph>
                             </div>
+
+                            {searchResult.quote && (
+                                <div className="mb-8">
+                                    <Divider orientation="left"><Title level={5} className="!mb-0">Chi tiết chi phí</Title></Divider>
+                                    <div className="bg-gray-50 rounded-xl overflow-hidden border border-gray-100">
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr className="bg-gray-100 text-gray-600">
+                                                    <th className="px-4 py-3 text-left font-semibold">Mã SP</th>
+                                                    <th className="px-4 py-3 text-left font-semibold">Nội dung / Linh kiện</th>
+                                                    <th className="px-4 py-3 text-center font-semibold" style={{ width: 80 }}>SL</th>
+                                                    <th className="px-4 py-3 text-right font-semibold">Đơn giá</th>
+                                                    <th className="px-4 py-3 text-right font-semibold">Thành tiền</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-200">
+                                                {/* Labor Cost */}
+                                                <tr>
+                                                    <td className="px-4 py-3 text-gray-500 font-mono text-xs">-</td>
+                                                    <td className="px-4 py-3 text-gray-700">Tiền công sửa chữa & dịch vụ</td>
+                                                    <td className="px-4 py-3 text-center">1</td>
+                                                    <td className="px-4 py-3 text-right">{searchResult.quote.laborCost.toLocaleString('vi-VN')}đ</td>
+                                                    <td className="px-4 py-3 text-right font-medium">{searchResult.quote.laborCost.toLocaleString('vi-VN')}đ</td>
+                                                </tr>
+                                                {/* Parts */}
+                                                {searchResult.quote.parts.map((part, index) => (
+                                                    <tr key={index}>
+                                                        <td className="px-4 py-3 text-gray-500 font-mono text-xs">{part.sku}</td>
+                                                        <td className="px-4 py-3 text-gray-700">{part.name}</td>
+                                                        <td className="px-4 py-3 text-center">{part.quantity}</td>
+                                                        <td className="px-4 py-3 text-right">{part.price.toLocaleString('vi-VN')}đ</td>
+                                                        <td className="px-4 py-3 text-right font-medium">{part.subtotal.toLocaleString('vi-VN')}đ</td>
+                                                    </tr>
+                                                ))}
+                                                {/* Discount */}
+                                                {searchResult.quote.discount > 0 && (
+                                                    <tr className="bg-red-50">
+                                                        <td className="px-4 py-2 text-gray-500 font-mono text-xs">-</td>
+                                                        <td className="px-4 py-2 text-red-600 font-medium">Chiết khấu / Giảm giá</td>
+                                                        <td className="px-4 py-2 text-center text-red-600">-</td>
+                                                        <td className="px-4 py-2 text-right text-red-600">-</td>
+                                                        <td className="px-4 py-2 text-right font-bold text-red-600">-{searchResult.quote.discount.toLocaleString('vi-VN')}đ</td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                            <tfoot>
+                                                <tr className="bg-primary-50">
+                                                    <td colSpan={4} className="px-4 py-4 text-right font-bold text-gray-700">TỔNG CỘNG:</td>
+                                                    <td className="px-4 py-4 text-right font-bold text-primary-600 text-lg">
+                                                        {searchResult.quote.totalCost.toLocaleString('vi-VN')}đ
+                                                    </td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
 
                             <div>
                                 <Title level={5} className="!mb-4">Tiến trình xử lý</Title>
@@ -202,9 +415,60 @@ const StatusLookup = () => {
                     </div>
                 )}
 
-                {!searchResult && !loading && !error && (
+                {!searchResult && !appointmentResults && !loading && !error && (
                     <div className="text-center py-12">
                         <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<span className="text-gray-400">Nhập thông tin để tra cứu trạng thái đơn hàng</span>} />
+                    </div>
+                )}
+
+                {/* Appointment Results */}
+                {appointmentResults && !loading && (
+                    <div className="animate-fade-in space-y-4 mt-8">
+                        <Title level={4} className="!mb-2">Tìm thấy {appointmentResults.length} lịch hẹn đang chờ</Title>
+                        {appointmentResults.map((apt, idx) => {
+                            const status = appointmentStatusMap[apt.trangThaiXacNhan] || { label: apt.trangThaiXacNhan, color: '#6b7280' }
+                            return (
+                                <Card key={apt._id || idx} className="shadow-md border-0 bg-blue-50/30" style={{ borderRadius: 12 }}>
+                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
+                                                <ClockCircleOutlined className="text-xl text-blue-600" />
+                                            </div>
+                                            <div>
+                                                <Text className="text-gray-500 text-xs">Mã lịch hẹn</Text>
+                                                <Title level={5} className="!mb-0 font-mono">{apt._id ? apt._id.slice(-8).toUpperCase() : 'N/A'}</Title>
+                                            </div>
+                                        </div>
+                                        <Tag color={status.color} className="text-sm px-3 py-0.5">{status.label}</Tag>
+                                    </div>
+                                    <Divider className="!my-3" />
+                                    <Row gutter={[16, 12]}>
+                                        <Col xs={12} md={6}>
+                                            <Text className="text-gray-500 text-xs block">Họ tên</Text>
+                                            <Text strong>{apt.hoTenKhach}</Text>
+                                        </Col>
+                                        <Col xs={12} md={6}>
+                                            <Text className="text-gray-500 text-xs block">SĐT</Text>
+                                            <Text strong>{apt.soDienThoai}</Text>
+                                        </Col>
+                                        <Col xs={12} md={6}>
+                                            <Text className="text-gray-500 text-xs block">Ngày giờ hẹn</Text>
+                                            <Text strong>{new Date(apt.ngayGioHen).toLocaleString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</Text>
+                                        </Col>
+                                        <Col xs={12} md={6}>
+                                            <Text className="text-gray-500 text-xs block">Thiết bị</Text>
+                                            <Text strong>{apt.modelMay || 'Chưa cung cấp'}</Text>
+                                        </Col>
+                                    </Row>
+                                    {apt.noiDungHongHoc && (
+                                        <div className="mt-3 p-3 bg-white rounded-lg border border-gray-100">
+                                            <Text className="text-gray-500 text-xs block mb-1">Mô tả lỗi</Text>
+                                            <Text>{apt.noiDungHongHoc}</Text>
+                                        </div>
+                                    )}
+                                </Card>
+                            )
+                        })}
                     </div>
                 )}
             </div>

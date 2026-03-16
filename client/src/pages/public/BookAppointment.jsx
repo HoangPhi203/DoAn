@@ -24,12 +24,39 @@ const BookAppointment = () => {
         try {
             const values = await form.validateFields()
             setLoading(true)
-            await new Promise(resolve => setTimeout(resolve, 1500))
-            const appointmentId = `APT-${Date.now().toString().slice(-6)}`
-            setBookingData({ ...values, id: appointmentId, date: values.date.format('DD/MM/YYYY') })
-            setBookingComplete(true)
-            message.success('Đặt lịch thành công!')
+
+            // Build the date+time into a proper ISO date
+            const dateStr = values.date.format('YYYY-MM-DD')
+            const ngayGioHen = new Date(`${dateStr}T${values.time}:00`)
+
+            const response = await fetch('http://localhost:5000/api/appointments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    hoTenKhach: values.name,
+                    soDienThoai: values.phone,
+                    ngayGioHen: ngayGioHen.toISOString(),
+                    noiDungHongHoc: values.issueDescription,
+                    modelMay: values.deviceType,
+                    ghiChu: values.email || ''
+                })
+            })
+
+            const data = await response.json()
+
+            if (data.success) {
+                setBookingData({
+                    ...values,
+                    id: data.data._id,
+                    date: values.date.format('DD/MM/YYYY')
+                })
+                setBookingComplete(true)
+                message.success('Đặt lịch thành công! Dữ liệu đã được lưu.')
+            } else {
+                message.error(data.message || 'Có lỗi xảy ra khi đặt lịch')
+            }
         } catch (error) {
+            console.error(error)
             message.error('Vui lòng điền đầy đủ thông tin bắt buộc')
         } finally {
             setLoading(false)
@@ -54,8 +81,8 @@ const BookAppointment = () => {
                                 </div>
                             }
                             extra={[
-                                <Button type="primary" key="home" onClick={() => navigate('/')}>Về trang chủ</Button>,
-                                <Button key="lookup" onClick={() => navigate('/status-lookup')}>Tra cứu đơn hàng</Button>,
+                                <Button type="primary" key="home" onClick={() => navigate('/')} className="gradient-primary">Về trang chủ</Button>,
+                                <Button key="lookup" onClick={() => navigate('/status-lookup')} className="hover:text-primary-600 border-primary-600 text-primary-600">Tra cứu đơn hàng</Button>,
                             ]}
                         />
                     </Card>
@@ -153,7 +180,7 @@ const BookAppointment = () => {
                             loading={loading}
                             icon={<CheckCircleOutlined />}
                             block
-                            className="h-12 text-lg font-semibold"
+                            className="h-12 text-lg font-semibold gradient-primary border-0"
                         >
                             Đặt lịch ngay
                         </Button>

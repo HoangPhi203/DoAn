@@ -25,59 +25,46 @@ export const AuthProvider = ({ children }) => {
     }, [])
 
     const login = async (phone, password) => {
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        try {
+            const res = await fetch('http://localhost:5000/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ soDienThoai: phone, matKhau: password })
+            })
+            const data = await res.json()
+            if (data.success) {
+                const roleMap = {
+                    'Admin': 'admin',
+                    'TiepTan': 'receptionist',
+                    'KyThuatVien': 'technician',
+                    'KhachHang': 'customer'
+                };
+                const mappedRole = roleMap[data.user.vaiTro] || 'customer';
 
-        // Find user in mock data
-        const foundUser = mockUsers.find(
-            u => u.phone === phone && u.password === password
-        )
-
-        if (foundUser) {
-            const userData = {
-                id: foundUser.id,
-                name: foundUser.name,
-                phone: foundUser.phone,
-                email: foundUser.email,
-                role: foundUser.role,
-                avatar: foundUser.avatar,
+                const userDataObj = {
+                    id: data.user.id,
+                    name: data.user.hoTen,
+                    phone: data.user.soDienThoai,
+                    email: data.user.email,
+                    role: mappedRole,
+                }
+                setUser(userDataObj)
+                localStorage.setItem('user', JSON.stringify(userDataObj))
+                localStorage.setItem('token', data.token)
+                return { success: true, user: userDataObj }
+            } else {
+                return { success: false, message: data.message || 'Số điện thoại hoặc mật khẩu không đúng' }
             }
-            setUser(userData)
-            localStorage.setItem('user', JSON.stringify(userData))
-            return { success: true, user: userData }
+        } catch (err) {
+            return { success: false, message: 'Lỗi kết nối server' }
         }
-
-        return { success: false, message: 'Số điện thoại hoặc mật khẩu không đúng' }
     }
 
-    const register = async (userData) => {
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 1000))
-
-        // Check if phone already exists
-        const existingUser = mockUsers.find(u => u.phone === userData.phone)
-        if (existingUser) {
-            return { success: false, message: 'Số điện thoại đã được đăng ký' }
-        }
-
-        // Create new user (in real app, this would be an API call)
-        const newUser = {
-            id: `user_${Date.now()}`,
-            name: userData.name,
-            phone: userData.phone,
-            email: userData.email,
-            role: 'customer',
-            avatar: null,
-        }
-
-        setUser(newUser)
-        localStorage.setItem('user', JSON.stringify(newUser))
-        return { success: true, user: newUser }
-    }
 
     const logout = () => {
         setUser(null)
         localStorage.removeItem('user')
+        localStorage.removeItem('token')
     }
 
     const hasRole = (roles) => {
@@ -93,7 +80,6 @@ export const AuthProvider = ({ children }) => {
         loading,
         isAuthenticated: !!user,
         login,
-        register,
         logout,
         hasRole,
     }

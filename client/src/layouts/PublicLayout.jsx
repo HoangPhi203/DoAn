@@ -38,49 +38,16 @@ const PublicLayout = () => {
     const menuItems = [
         { key: '/', icon: <HomeOutlined />, label: 'Trang chủ' },
         { key: '/about', icon: <InfoCircleOutlined />, label: 'Giới thiệu' },
-        {
-            key: '/services',
-            icon: <AppstoreOutlined />,
-            label: 'Dịch vụ',
-            children: [
-                { key: '/services/repair', label: 'Sửa laptop' },
-                { key: '/services/maintenance', label: 'Bảo trì - bảo dưỡng' },
-                { key: '/services/upgrade', label: 'Thay thế nâng cấp' },
-                { key: '/services/software', label: 'Cài đặt phần mềm' },
-            ]
-        },
-        {
-            key: '/parts',
-            icon: <BuildOutlined />,
-            label: 'Linh kiện',
-            children: [
-                { key: '/parts/keyboard', label: 'Bàn phím laptop' },
-                { key: '/parts/charger', label: 'Sạc laptop' },
-                { key: '/parts/battery', label: 'Pin laptop' },
-                { key: '/parts/ram', label: 'Ram laptop' },
-                { key: '/parts/storage', label: 'Ổ cứng laptop' },
-                { key: '/parts/screen', label: 'Màn hình laptop' },
-                { key: '/parts/fan', label: 'Quạt tản nhiệt CPU' },
-            ]
-        },
+
         {
             key: '/news',
             icon: <ReadOutlined />,
-            label: 'Tin tức',
-            children: [
-                { key: '/news/technology', label: 'Tin công nghệ' },
-                { key: '/news/tips', label: 'Thủ thuật' },
-                { key: '/news/office', label: 'Ứng dụng văn phòng' },
-            ]
+            label: 'Tin tức'
         },
         {
             key: '/pricing',
             icon: <FileTextOutlined />,
-            label: 'Báo giá',
-            children: [
-                { key: '/pricing/repair', label: 'Dịch vụ sửa chữa laptop' },
-                { key: '/pricing/parts', label: 'Thay thế linh kiện laptop' },
-            ]
+            label: 'Báo giá'
         },
     ]
 
@@ -164,6 +131,13 @@ const PublicLayout = () => {
 
                     {/* Auth Buttons / User Menu */}
                     <div className="hidden md:flex items-center gap-3 shrink-0">
+                        <a href="tel:0383634255" className="flex items-center gap-2 no-underline hover:opacity-80 transition-opacity">
+                            <PhoneOutlined className="text-xl" style={{ color: '#e53e3e' }} />
+                            <div className="flex flex-col leading-tight text-center">
+                                <span className="text-xs text-gray-500 font-medium">Hotline</span>
+                                <span className="text-sm font-medium" style={{ color: '#e53e3e' }}>0383634255</span>
+                            </div>
+                        </a>
                         {isAuthenticated ? (
                             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
                                 <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 px-3 py-2 rounded-lg transition-colors">
@@ -180,12 +154,7 @@ const PublicLayout = () => {
                         ) : (
                             <>
                                 <Link to="/login">
-                                    <Button icon={<LoginOutlined />}>Đăng nhập</Button>
-                                </Link>
-                                <Link to="/register">
-                                    <Button icon={<UserAddOutlined />}>
-                                        Đăng ký
-                                    </Button>
+                                    <Button icon={<LoginOutlined />} type="primary" className="gradient-primary border-0">Đăng nhập</Button>
                                 </Link>
                             </>
                         )}
@@ -294,14 +263,6 @@ const PublicLayout = () => {
                                 <LoginOutlined />
                                 <span>Đăng nhập</span>
                             </Link>
-                            <Link
-                                to="/register"
-                                onClick={() => setMobileMenuOpen(false)}
-                                className="flex items-center gap-3 px-4 py-3 rounded-lg no-underline text-white bg-primary-600 hover:bg-primary-700"
-                            >
-                                <UserAddOutlined />
-                                <span>Đăng ký</span>
-                            </Link>
                         </>
                     )}
                 </div>
@@ -326,16 +287,12 @@ const PublicLayout = () => {
                                     </span>
                                 </div>
                                 <div className="flex">
-                                    <span className="text-gray-500 shrink-0" style={{ width: 120 }}>Tên viết tắt:</span>
-                                    <span>VINADATS.,JSC</span>
-                                </div>
-                                <div className="flex">
-                                    <span className="text-gray-500 shrink-0" style={{ width: 120 }}>Mã số thuế:</span>
-                                    <span>0102614707</span>
-                                </div>
-                                <div className="flex">
                                     <span className="text-gray-500 shrink-0" style={{ width: 120 }}>Địa chỉ trụ sở:</span>
                                     <span>Số nhà 35 ngõ 451 đường Hoàng Tăng Bí, Thành phố Hà Nội</span>
+                                </div>
+                                <div className="flex">
+                                    <span className="text-gray-500 shrink-0" style={{ width: 120 }}>Hotline:</span>
+                                    <span>0383634255</span>
                                 </div>
                             </div>
                         </div>
@@ -390,26 +347,6 @@ const PublicLayout = () => {
                     </div>
                 </div>
             </Footer>
-            {/* Floating Contact Buttons - Left side */}
-            <div className="fixed bottom-24 right-6 z-50 flex flex-col-reverse items-end gap-3">
-                {/* Phone */}
-                <a
-                    href="tel:0383634255"
-                    className="group flex items-center gap-3 no-underline"
-                    title="Gọi ngay"
-                >
-                    <div className="relative">
-                        <div className="absolute inset-0 bg-green-500 rounded-full animate-ping opacity-30" />
-                        <div className="relative w-14 h-14 bg-green-500 rounded-full flex items-center justify-center shadow-lg hover:bg-green-600 transition-all hover:scale-110 cursor-pointer">
-                            <PhoneOutlined className="text-white text-2xl" />
-                        </div>
-                    </div>
-                    <span className="hidden group-hover:block bg-gray-900 text-white text-sm px-3 py-1.5 rounded-lg shadow-lg whitespace-nowrap animate-fade-in">
-                        0383634255
-                    </span>
-                </a>
-            </div>
-
             {/* AI Chatbot */}
             <AIChatBot />
         </Layout>

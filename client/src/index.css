@@ -200,13 +200,78 @@ h6 {
     overflow: hidden;
 }
 
-/* Fix primary button shadow */
+/* Fix primary button styling - always visible */
 .ant-btn-primary:not(:disabled) {
+    background: var(--color-primary) !important;
+    border-color: var(--color-primary) !important;
+    color: white !important;
     box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
 }
 
-.ant-btn-primary:not(:disabled):hover {
-    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+.ant-btn-primary:not(:disabled):hover,
+.ant-btn-primary:not(:disabled):focus {
+    background: var(--color-primary-hover, #6d28d9) !important;
+    border-color: var(--color-primary-hover, #6d28d9) !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4) !important;
+}
+
+/* Fix default button styling - always visible */
+.ant-btn-default:not(:disabled) {
+    background: white !important;
+    border-color: #d9d9d9 !important;
+    color: rgba(0, 0, 0, 0.88) !important;
+}
+
+.ant-btn-default:not(:disabled):hover,
+.ant-btn-default:not(:disabled):focus {
+    border-color: var(--color-primary) !important;
+    color: var(--color-primary) !important;
+    background: white !important;
+}
+
+/* Fix danger button styling */
+.ant-btn-default.ant-btn-dangerous:not(:disabled) {
+    border-color: #ff4d4f !important;
+    color: #ff4d4f !important;
+    background: white !important;
+}
+
+.ant-btn-default.ant-btn-dangerous:not(:disabled):hover {
+    border-color: #ff7875 !important;
+    color: #ff7875 !important;
+    background: #fff2f0 !important;
+}
+
+/* Fix text and link buttons - keep text visible */
+.ant-btn-text:not(:disabled) {
+    color: rgba(0, 0, 0, 0.88) !important;
+}
+
+.ant-btn-text:not(:disabled):hover {
+    background: rgba(0, 0, 0, 0.04) !important;
+    color: rgba(0, 0, 0, 0.88) !important;
+}
+
+.ant-btn-link:not(:disabled) {
+    color: var(--color-primary) !important;
+}
+
+.ant-btn-link:not(:disabled):hover {
+    color: var(--color-primary-hover, #6d28d9) !important;
+}
+
+/* Gradient primary class (for custom styled buttons) */
+.gradient-primary.ant-btn:not(:disabled) {
+    background: linear-gradient(135deg, var(--color-primary), #8b5cf6) !important;
+    border-color: transparent !important;
+    color: white !important;
+}
+
+.gradient-primary.ant-btn:not(:disabled):hover {
+    background: linear-gradient(135deg, #6d28d9, #7c3aed) !important;
+    color: white !important;
+    opacity: 0.95 !important;
 }
 
 /* Header Search Bar */
@@ -249,6 +314,57 @@ h6 {
 .status-cancelled {
     color: var(--color-danger);
     background: rgba(239, 68, 68, 0.1);
+}
+
+/* Hero Carousel Native Arrows */
+.hero-carousel .slick-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%) scale(0.9);
+    z-index: 10;
+    width: 64px;
+    height: 64px;
+    background: transparent !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.75) !important;
+    font-size: 36px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    opacity: 0 !important;
+    border: none;
+    box-shadow: none;
+}
+
+.hero-carousel .slick-arrow::before {
+    font-size: 48px; /* Thicker and larger */
+    opacity: 1;
+    color: rgba(255, 255, 255, 0.8);
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.6));
+    transition: all 0.3s;
+    font-weight: bold;
+}
+
+.hero-carousel:hover .slick-arrow {
+    opacity: 1 !important;
+    transform: translateY(-50%) scale(1);
+}
+
+.hero-carousel .slick-arrow:hover {
+    transform: translateY(-50%) scale(1.15);
+}
+
+.hero-carousel .slick-arrow:hover::before {
+    color: white;
+}
+
+.hero-carousel .slick-prev {
+    left: 10px;
+}
+
+.hero-carousel .slick-next {
+    right: 4px;
 }
 
 /* ========================================

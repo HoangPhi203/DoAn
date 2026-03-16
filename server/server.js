@@ -17,7 +17,7 @@ app.use(express.json());
 
 // Enable CORS
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:3000'],
+    origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5174'],
     credentials: true
 }));
 
@@ -26,6 +26,10 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/inventory', require('./routes/inventoryRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/appointments', require('./routes/appointmentRoutes'));
+app.use('/api/warranty', require('./routes/warrantyRoutes'));
+app.use('/api/quotes', require('./routes/quoteRoutes'));
+app.use('/api/reports', require('./routes/reportRoutes'));
+app.use('/api/notifications', require('./routes/notificationRoutes'));
 
 // Health check
 app.get('/api/health', (req, res) => {

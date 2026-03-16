@@ -12,9 +12,10 @@ const {
     trackOrder
 } = require('../controllers/orderController');
 const { protect, authorize } = require('../middleware/authMiddleware');
+const { verifyCaptcha } = require('../middleware/captchaMiddleware');
 
 // Public route - must come before protected routes
-router.get('/track/:phone', trackOrder);
+router.get('/track/:phone', verifyCaptcha, trackOrder);
 
 router.route('/')
     .get(protect, authorize('Admin', 'TiepTan', 'KyThuatVien'), getOrders)

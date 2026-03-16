@@ -2,6 +2,7 @@ const DonHang = require('../models/DonHang');
 const ChiTietSuaChua = require('../models/ChiTietSuaChua');
 const LinhKien = require('../models/LinhKien');
 const User = require('../models/User');
+const mongoose = require('mongoose');
 
 // @desc    Get all orders
 // @route   GET /api/orders
@@ -20,9 +21,13 @@ exports.getOrders = async (req, res, next) => {
             query.kyThuatVien = kyThuatVien;
         }
 
-        // If user is a technician, only show their assigned orders
+        // If user is a technician, show their assigned orders OR unassigned orders waiting for inspection
         if (req.user.vaiTro === 'KyThuatVien') {
-            query.kyThuatVien = req.user._id;
+            query.$or = [
+                { kyThuatVien: req.user._id },
+                { kyThuatVien: null, trangThai: 'ChoBaoGia' },
+                { kyThuatVien: { $exists: false }, trangThai: 'ChoBaoGia' }
+            ];
         }
 
         const orders = await DonHang.find(query)
@@ -297,30 +302,62 @@ exports.addParts = async (req, res, next) => {
     }
 };
 
-// @desc    Track order by phone (public)
-// @route   GET /api/orders/track/:phone
+// @desc    Track order by phone or tracking code (public)
+// @route   GET /api/orders/track/:term
 // @access  Public
 exports.trackOrder = async (req, res, next) => {
     try {
-        const { phone } = req.params;
+        const { phone: term } = req.params; // Route still uses :phone but we treat it as term
+        let query = {};
 
-        const customer = await User.findOne({ soDienThoai: phone });
+        // Check if term is a phone number (all digits)
+        if (/^\d+$/.test(term)) {
+            const customer = await User.findOne({ soDienThoai: term });
+            if (!customer) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Không tìm thấy khách hàng với số điện thoại này'
+                });
+            }
+            query = { khachHang: customer._id };
+        } else {
+            // Assume it's a tracking code (maVanDon)
+            query = { maVanDon: { $regex: new RegExp(`^${term}$`, 'i') } };
+        }
 
-        if (!customer) {
+        const orders = await DonHang.find(query)
+            .populate('khachHang', 'hoTen soDienThoai diaChi email')
+            .populate('kyThuatVien', 'hoTen')
+            .sort('-createdAt')
+            .limit(10); // Limit to 10 for phone lookups
+
+        if (orders.length === 0) {
             return res.status(404).json({
                 success: false,
-                message: 'Không tìm thấy đơn hàng với số điện thoại này'
+                message: 'Không tìm thấy đơn hàng nào phù hợp'
             });
         }
 
-        const orders = await DonHang.find({ khachHang: customer._id })
-            .select('maVanDon modelMay trangThai ngayNhan ngayHenTra uocTinhChiPhi')
-            .sort('-createdAt');
+        // Fetch quote/repair details and invoice for formatting the response exactly like StatusLookup expects.
+        const ordersWithDetails = await Promise.all(orders.map(async (order) => {
+            const chiTiet = await ChiTietSuaChua.findOne({ donHang: order._id })
+                .populate('danhSachLinhKien.linhKien');
+            
+            const hoaDon = await mongoose.model('HoaDon').findOne({ donHang: order._id });
+            
+            return {
+                ...order.toObject(),
+                chiTietSuaChua: chiTiet,
+                maHoaDon: hoaDon ? hoaDon.maHoaDon : null,
+                tongTienHoaDon: hoaDon ? hoaDon.tongTien : null,
+                giamGiaHoaDon: hoaDon ? hoaDon.giamGia : 0
+            };
+        }));
 
         res.status(200).json({
             success: true,
-            count: orders.length,
-            data: orders
+            count: ordersWithDetails.length,
+            data: ordersWithDetails
         });
     } catch (err) {
         next(err);
