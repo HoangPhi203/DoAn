@@ -27,7 +27,7 @@ exports.getAppointments = async (req, res, next) => {
             .populate('khachHang', 'hoTen soDienThoai')
             .skip((page - 1) * limit)
             .limit(parseInt(limit))
-            .sort('ngayGioHen');
+            .sort('-createdAt');
 
         const total = await LichHen.countDocuments(query);
 
@@ -328,6 +328,16 @@ exports.confirmToOrder = async (req, res, next) => {
         // Update appointment status to DaXacNhan
         appointment.trangThaiXacNhan = 'DaXacNhan';
         await appointment.save();
+
+        // Tạo thông báo cho Kỹ thuật viên
+        await ThongBao.create({
+            tieuDe: 'Đơn hàng mới cần kiểm tra',
+            noiDung: `Đơn hàng ${order.maVanDon} đã được tạo từ lịch hẹn của ${appointment.hoTenKhach}. Vui lòng kiểm tra và báo giá.`,
+            loai: 'DonHang',
+            nguoiNhan: 'KyThuatVien',
+            duLieuLienQuan: order._id,
+            loaiThamChieu: 'DonHang'
+        });
 
         res.status(200).json({
             success: true,

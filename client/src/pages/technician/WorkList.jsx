@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Card, Table, Tag, Button, Typography, Radio, List, Avatar, message } from 'antd'
-import { UnorderedListOutlined, AppstoreOutlined, ToolOutlined, EyeOutlined, SearchOutlined, HistoryOutlined, MedicineBoxOutlined } from '@ant-design/icons'
+import { Card, Table, Tag, Button, Typography, Radio, List, Avatar, message, Input, Tabs } from 'antd'
+import { UnorderedListOutlined, AppstoreOutlined, ToolOutlined, EyeOutlined, SearchOutlined, HistoryOutlined, MedicineBoxOutlined, UserOutlined } from '@ant-design/icons'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Input, Tabs } from 'antd'
+import { useAuth } from '../../contexts/AuthContext'
 
 const { Title } = Typography
 
@@ -10,7 +10,8 @@ const WorkList = () => {
     const [viewMode, setViewMode] = useState('list')
     const [orders, setOrders] = useState([])
     const [searchText, setSearchText] = useState('')
-    const [activeTab, setActiveTab] = useState('active') // 'active' or 'all'
+    const { user } = useAuth()
+    const [activeTab, setActiveTab] = useState(user?.role === 'technician' ? 'mine' : 'active')
     const [loading, setLoading] = useState(false)
     const navigate = useNavigate()
     const location = useLocation()
@@ -75,10 +76,24 @@ const WorkList = () => {
             o.khachHang?.soDienThoai?.includes(searchText) ||
             o.modelMay?.toLowerCase().includes(searchText.toLowerCase())
         
-        if (activeTab === 'active') {
-            return matchesSearch && ['ChoBaoGia', 'ChoKhachDuyet', 'DangSua', 'ChoLinhKien', 'HoanThanh'].includes(o.trangThai)
+        if (!matchesSearch) return false
+
+        if (user?.role === 'technician') {
+            if (activeTab === 'mine') {
+                return (o.kyThuatVien?._id === user._id || o.kyThuatVien === user._id) && ['ChoBaoGia', 'ChoKhachDuyet', 'DangSua', 'ChoLinhKien', 'HoanThanh'].includes(o.trangThai)
+            }
+            if (activeTab === 'unassigned') {
+                return !o.kyThuatVien && o.trangThai === 'ChoBaoGia'
+            }
+            if (activeTab === 'history') {
+                return (o.kyThuatVien?._id === user._id || o.kyThuatVien === user._id) && ['DaTraKhach'].includes(o.trangThai)
+            }
+        } else {
+            if (activeTab === 'active') {
+                return ['ChoBaoGia', 'ChoKhachDuyet', 'DangSua', 'ChoLinhKien', 'HoanThanh'].includes(o.trangThai)
+            }
         }
-        return matchesSearch
+        return true
     })
 
     const workItems = filteredOrders
@@ -117,7 +132,11 @@ const WorkList = () => {
             <Tabs 
                 activeKey={activeTab} 
                 onChange={setActiveTab}
-                items={[
+                items={user?.role === 'technician' ? [
+                    { key: 'mine', label: <span><ToolOutlined /> Việc của tôi</span> },
+                    { key: 'unassigned', label: <span><UserOutlined /> Chờ nhận việc</span> },
+                    { key: 'history', label: <span><HistoryOutlined /> Lịch sử</span> }
+                ] : [
                     { key: 'active', label: <span><MedicineBoxOutlined /> Đang xử lý</span> },
                     { key: 'all', label: <span><HistoryOutlined /> Tất cả / Lịch sử</span> }
                 ]}

@@ -2,6 +2,7 @@ const DonHang = require('../models/DonHang');
 const ChiTietSuaChua = require('../models/ChiTietSuaChua');
 const LinhKien = require('../models/LinhKien');
 const User = require('../models/User');
+const ThongBao = require('../models/ThongBao');
 const mongoose = require('mongoose');
 
 // @desc    Get all orders
@@ -132,6 +133,16 @@ exports.createOrder = async (req, res, next) => {
         const populatedOrder = await DonHang.findById(order._id)
             .populate('khachHang', 'hoTen soDienThoai email');
 
+        // Tạo thông báo cho Kỹ thuật viên
+        await ThongBao.create({
+            tieuDe: 'Đơn hàng mới cần kiểm tra',
+            noiDung: `Có đơn hàng mới ${order.maVanDon} vừa được tạo. Vui lòng kiểm tra và báo giá.`,
+            loai: 'DonHang',
+            nguoiNhan: 'KyThuatVien',
+            duLieuLienQuan: order._id,
+            loaiThamChieu: 'DonHang'
+        });
+
         res.status(201).json({
             success: true,
             message: `Đã tạo đơn hàng ${order.maVanDon}`,
@@ -148,6 +159,14 @@ exports.createOrder = async (req, res, next) => {
 exports.assignTechnician = async (req, res, next) => {
     try {
         const { kyThuatVienId } = req.body;
+
+        // If a technician is making the request, they can only assign themselves
+        if (req.user.vaiTro === 'KyThuatVien' && req.user._id.toString() !== kyThuatVienId) {
+            return res.status(403).json({
+                success: false,
+                message: 'Kỹ thuật viên chỉ có thể tự nhận việc cho chính mình'
+            });
+        }
 
         const technician = await User.findById(kyThuatVienId);
         if (!technician || technician.vaiTro !== 'KyThuatVien') {
@@ -213,6 +232,27 @@ exports.updateStatus = async (req, res, next) => {
             return res.status(404).json({
                 success: false,
                 message: 'Không tìm thấy đơn hàng'
+            });
+        }
+
+        // Notifications
+        if (trangThai === 'ChoKhachDuyet') {
+            await ThongBao.create({
+                tieuDe: 'Cần liên hệ khách báo giá',
+                noiDung: `Đơn hàng ${order.maVanDon} cần liên hệ khách hàng (${order.khachHang?.soDienThoai}) để duyệt báo giá sửa chữa.`,
+                loai: 'DonHang',
+                nguoiNhan: 'TiepTan',
+                duLieuLienQuan: order._id,
+                loaiThamChieu: 'DonHang'
+            });
+        } else if (trangThai === 'HoanThanh') {
+            await ThongBao.create({
+                tieuDe: 'Đơn hàng đã sửa xong',
+                noiDung: `Đơn hàng ${order.maVanDon} đã hoàn tất sửa chữa. Vui lòng liên hệ khách hàng (${order.khachHang?.soDienThoai}) đến nhận máy.`,
+                loai: 'DonHang',
+                nguoiNhan: 'TiepTan',
+                duLieuLienQuan: order._id,
+                loaiThamChieu: 'DonHang'
             });
         }
 

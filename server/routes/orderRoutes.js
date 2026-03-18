@@ -26,7 +26,7 @@ router.route('/:id')
     .put(protect, authorize('Admin', 'TiepTan'), updateOrder)
     .delete(protect, authorize('Admin'), deleteOrder);
 
-router.put('/:id/assign', protect, authorize('Admin', 'TiepTan'), assignTechnician);
+router.put('/:id/assign', protect, authorize('Admin', 'TiepTan', 'KyThuatVien'), assignTechnician);
 router.put('/:id/status', protect, authorize('Admin', 'KyThuatVien'), updateStatus);
 router.post('/:id/parts', protect, authorize('KyThuatVien', 'Admin'), addParts);
 
